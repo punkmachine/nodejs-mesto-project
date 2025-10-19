@@ -44,8 +44,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
 
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  const { statusCode = 500, message } = err;
+app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
+  const { statusCode = 500, message } = err as { statusCode: number; message: string };
 
   res
     .status(statusCode)
