@@ -42,8 +42,8 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(helmet());
 
-app.post('/signup', createUserValidation, createUser);
 app.post('/signin', loginValidation, login);
+app.post('/signup', createUserValidation, createUser);
 
 app.use(auth);
 app.use(routes);
