@@ -1,24 +1,25 @@
 import { type Response, type Request, type NextFunction } from 'express';
+import { AuthenticatedRequest } from '../types/express';
 import CardModel from '../models/card';
 
-import NotFoundError from '../errors/not-found-error';
-import UnauthorizedError from '../errors/unauthorized-error';
-import ValidationError from '../errors/validation-error';
+import NotFoundError from '../helpers/errors/not-found-error';
+import UnauthorizedError from '../helpers/errors/unauthorized-error';
+import ForbiddenError from '../helpers/errors/forbidden-error';
+import HttpStatus from '../helpers/constants/statusCodes';
 
 export const getCards = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const cards = await CardModel.find({}).populate('owner');
 
-    res.status(200).send({ data: cards });
+    res.send({ data: cards });
   } catch (error) {
     next(error);
   }
 };
 
-export const createCard = async (req: Request, res: Response, next: NextFunction) => {
+export const createCard = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const { name, link } = req.body;
-    // @ts-ignore
     const ownerId = req.user._id;
 
     if (!ownerId) {
@@ -29,16 +30,15 @@ export const createCard = async (req: Request, res: Response, next: NextFunction
 
     await card.populate('owner');
 
-    res.status(201).send({ data: card });
+    res.status(HttpStatus.CREATED).send({ data: card });
   } catch (error) {
     next(error);
   }
 };
 
-export const deleteCard = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteCard = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const cardId = req.params.id;
-    // @ts-ignore
     const userId = req.user._id;
 
     const card = await CardModel.findById(cardId);
@@ -48,21 +48,20 @@ export const deleteCard = async (req: Request, res: Response, next: NextFunction
     }
 
     if (card.owner.toString() !== userId) {
-      throw new ValidationError('Вы не можете удалить карточку, которую создал другой пользователь');
+      throw new ForbiddenError('Вы не можете удалить карточку, которую создал другой пользователь');
     }
 
     await CardModel.findByIdAndDelete(cardId);
 
-    res.status(200).send({ message: 'Карточка успешно удалена' });
+    res.send({ message: 'Карточка успешно удалена' });
   } catch (error) {
     next(error);
   }
 };
 
-export const likeCard = async (req: Request, res: Response, next: NextFunction) => {
+export const likeCard = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const { cardId } = req.params;
-    // @ts-ignore
     const userId = req.user._id;
 
     const card = await CardModel.findByIdAndUpdate(
@@ -75,16 +74,15 @@ export const likeCard = async (req: Request, res: Response, next: NextFunction) 
       throw new NotFoundError('Карточка не найдена');
     }
 
-    res.status(200).send({ data: card });
+    res.send({ data: card });
   } catch (error) {
     next(error);
   }
 };
 
-export const dislikeCard = async (req: Request, res: Response, next: NextFunction) => {
+export const dislikeCard = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const { cardId } = req.params;
-    // @ts-ignore
     const userId = req.user._id;
 
     const card = await CardModel.findByIdAndUpdate(
@@ -97,7 +95,7 @@ export const dislikeCard = async (req: Request, res: Response, next: NextFunctio
       throw new NotFoundError('Карточка не найдена');
     }
 
-    res.status(200).send({ data: card });
+    res.send({ data: card });
   } catch (error) {
     next(error);
   }

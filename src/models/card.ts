@@ -1,4 +1,5 @@
 import { model, Schema, Types } from 'mongoose';
+import URL_PATTERN from '../helpers/constants/regex';
 
 export interface Card {
   name: string;
@@ -18,7 +19,7 @@ const cardSchema = new Schema<Card>({
   link: {
     type: String,
     validate: {
-      validator: (v: string) => v.startsWith('https://'),
+      validator: (v: string) => URL_PATTERN.test(v),
       message: 'Некорректный URL картинки',
     },
     required: true,
