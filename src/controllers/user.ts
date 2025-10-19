@@ -5,6 +5,7 @@ import { AuthenticatedRequest } from '../types/express';
 import UserModel from '../models/user';
 import NotFoundError from '../helpers/errors/not-found-error';
 import UnauthorizedError from '../helpers/errors/unauthorized-error';
+import ConflictError from '../helpers/errors/conflict-error';
 import HttpStatus from '../helpers/constants/statusCodes';
 
 const { JWT_SECRET } = process.env;
@@ -21,11 +22,9 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction) 
 
 export const getUserById = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = await UserModel.findById(req.params.id);
-
-    if (!user) {
-      throw new NotFoundError('Пользователь не найден');
-    }
+    const user = await UserModel
+      .findById(req.params.id)
+      .orFail(new NotFoundError('Пользователь не найден'));
 
     res.send({ data: user });
   } catch (error) {
@@ -63,7 +62,11 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
 
     res.status(HttpStatus.CREATED).send({ data: user });
   } catch (error) {
-    next(error);
+    if (error instanceof Error && 'code' in error && error.code === 11000) {
+      next(new ConflictError('Пользователь с таким email уже существует'));
+    } else {
+      next(error);
+    }
   }
 };
 

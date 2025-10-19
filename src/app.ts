@@ -18,13 +18,9 @@ import HttpStatus from './helpers/constants/statusCodes';
 import { requestLogger, errorLogger } from './middlewares/logger';
 
 const {
-  MONGO_URL,
+  MONGO_URL = 'mongodb://localhost:27017/mestodb',
   PORT = 3000,
 } = process.env;
-
-if (!MONGO_URL) {
-  process.exit(1);
-}
 
 const app = express();
 
@@ -53,14 +49,6 @@ app.use(errorLogger);
 app.use(errors());
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  if (err.code === 11000) {
-    res.status(HttpStatus.CONFLICT).send({
-      message: 'Пользователь с таким email уже существует',
-    });
-
-    return;
-  }
-
   if (err.name === 'CastError') {
     res.status(HttpStatus.NOT_FOUND).send({
       message: 'Ресурс не найден',

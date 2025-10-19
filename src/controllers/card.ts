@@ -8,7 +8,7 @@ import HttpStatus from '../helpers/constants/statusCodes';
 
 export const getCards = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const cards = await CardModel.find({}).populate('owner');
+    const cards = await CardModel.find({});
 
     res.send({ data: cards });
   } catch (error) {
@@ -34,11 +34,7 @@ export const deleteCard = async (req: AuthenticatedRequest, res: Response, next:
     const cardId = req.params.id;
     const userId = req.user._id;
 
-    const card = await CardModel.findById(cardId);
-
-    if (!card) {
-      throw new NotFoundError('Карточка не найдена');
-    }
+    const card = await CardModel.findById(cardId).orFail(new NotFoundError('Карточка не найдена'));
 
     if (card.owner.toString() !== userId) {
       throw new ForbiddenError('Вы не можете удалить карточку, которую создал другой пользователь');
@@ -61,11 +57,7 @@ export const likeCard = async (req: AuthenticatedRequest, res: Response, next: N
       cardId,
       { $addToSet: { likes: userId } },
       { new: true },
-    );
-
-    if (!card) {
-      throw new NotFoundError('Карточка не найдена');
-    }
+    ).orFail(new NotFoundError('Карточка не найдена'));
 
     res.send({ data: card });
   } catch (error) {
@@ -82,11 +74,7 @@ export const dislikeCard = async (req: AuthenticatedRequest, res: Response, next
       cardId,
       { $pull: { likes: userId } },
       { new: true },
-    );
-
-    if (!card) {
-      throw new NotFoundError('Карточка не найдена');
-    }
+    ).orFail(new NotFoundError('Карточка не найдена'));
 
     res.send({ data: card });
   } catch (error) {
