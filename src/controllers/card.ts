@@ -3,7 +3,6 @@ import { AuthenticatedRequest } from '../types/express';
 import CardModel from '../models/card';
 
 import NotFoundError from '../helpers/errors/not-found-error';
-import UnauthorizedError from '../helpers/errors/unauthorized-error';
 import ForbiddenError from '../helpers/errors/forbidden-error';
 import HttpStatus from '../helpers/constants/statusCodes';
 
@@ -22,13 +21,7 @@ export const createCard = async (req: AuthenticatedRequest, res: Response, next:
     const { name, link } = req.body;
     const ownerId = req.user._id;
 
-    if (!ownerId) {
-      throw new UnauthorizedError('Необходима авторизация');
-    }
-
     const card = await CardModel.create({ name, link, owner: ownerId });
-
-    await card.populate('owner');
 
     res.status(HttpStatus.CREATED).send({ data: card });
   } catch (error) {
@@ -68,7 +61,7 @@ export const likeCard = async (req: AuthenticatedRequest, res: Response, next: N
       cardId,
       { $addToSet: { likes: userId } },
       { new: true },
-    ).populate(['owner', 'likes']);
+    );
 
     if (!card) {
       throw new NotFoundError('Карточка не найдена');
@@ -89,7 +82,7 @@ export const dislikeCard = async (req: AuthenticatedRequest, res: Response, next
       cardId,
       { $pull: { likes: userId } },
       { new: true },
-    ).populate(['owner', 'likes']);
+    );
 
     if (!card) {
       throw new NotFoundError('Карточка не найдена');

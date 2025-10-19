@@ -43,10 +43,6 @@ export const getCurrentUser = async (
 
     const user = await UserModel.findById(userId);
 
-    if (!user) {
-      throw new NotFoundError('Пользователь не найден');
-    }
-
     res.send({ data: user });
   } catch (error) {
     next(error);
@@ -115,10 +111,6 @@ export const updateProfile = async (
       { new: true, runValidators: true },
     );
 
-    if (!user) {
-      throw new NotFoundError('Пользователь не найден');
-    }
-
     res.send({ data: user });
   } catch (error) {
     next(error);
@@ -139,10 +131,6 @@ export const updateAvatar = async (
       { avatar },
       { new: true, runValidators: true },
     );
-
-    if (!user) {
-      throw new NotFoundError('Пользователь не найден');
-    }
 
     res.send({ data: user });
   } catch (error) {
