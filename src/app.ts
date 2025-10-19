@@ -49,14 +49,6 @@ app.use(errorLogger);
 app.use(errors());
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  if (err.name === 'CastError') {
-    res.status(HttpStatus.NOT_FOUND).send({
-      message: 'Ресурс не найден',
-    });
-
-    return;
-  }
-
   const { statusCode = HttpStatus.INTERNAL_SERVER_ERROR, message } = err;
 
   res
