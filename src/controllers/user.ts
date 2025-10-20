@@ -1,11 +1,16 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+
 import { AuthenticatedRequest } from '../types/express';
+
 import UserModel from '../models/user';
+
 import NotFoundError from '../helpers/errors/not-found-error';
 import UnauthorizedError from '../helpers/errors/unauthorized-error';
 import ConflictError from '../helpers/errors/conflict-error';
+import BadRequestError from '../helpers/errors/bad-request-error';
+
 import HttpStatus from '../helpers/constants/statusCodes';
 
 const { JWT_SECRET } = process.env;
@@ -28,7 +33,11 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
 
     res.send({ data: user });
   } catch (error) {
-    next(error);
+    if (error instanceof Error && 'name' in error && error.name === 'CastError') {
+      next(new BadRequestError('Невалидный ID пользователя'));
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -62,7 +71,9 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
 
     res.status(HttpStatus.CREATED).send({ data: user });
   } catch (error) {
-    if (error instanceof Error && 'code' in error && error.code === 11000) {
+    if (error instanceof Error && 'name' in error && error.name === 'ValidationError') {
+      next(new BadRequestError(`${Object.values((error as any).errors).map((err: any) => err.message).join(', ')}`));
+    } else if (error instanceof Error && 'code' in error && error.code === 11000) {
       next(new ConflictError('Пользователь с таким email уже существует'));
     } else {
       next(error);
@@ -116,7 +127,11 @@ export const updateProfile = async (
 
     res.send({ data: user });
   } catch (error) {
-    next(error);
+    if (error instanceof Error && 'name' in error && error.name === 'ValidationError') {
+      next(new BadRequestError(`${Object.values((error as any).errors).map((err: any) => err.message).join(', ')}`));
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -137,6 +152,10 @@ export const updateAvatar = async (
 
     res.send({ data: user });
   } catch (error) {
-    next(error);
+    if (error instanceof Error && 'name' in error && error.name === 'ValidationError') {
+      next(new BadRequestError(`${Object.values((error as any).errors).map((err: any) => err.message).join(', ')}`));
+    } else {
+      next(error);
+    }
   }
 };

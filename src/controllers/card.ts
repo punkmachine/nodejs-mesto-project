@@ -1,9 +1,13 @@
 import { type Response, type Request, type NextFunction } from 'express';
+
 import { AuthenticatedRequest } from '../types/express';
+
 import CardModel from '../models/card';
 
 import NotFoundError from '../helpers/errors/not-found-error';
 import ForbiddenError from '../helpers/errors/forbidden-error';
+import BadRequestError from '../helpers/errors/bad-request-error';
+
 import HttpStatus from '../helpers/constants/statusCodes';
 
 export const getCards = async (req: Request, res: Response, next: NextFunction) => {
@@ -25,7 +29,11 @@ export const createCard = async (req: AuthenticatedRequest, res: Response, next:
 
     res.status(HttpStatus.CREATED).send({ data: card });
   } catch (error) {
-    next(error);
+    if (error instanceof Error && 'name' in error && error.name === 'ValidationError') {
+      next(new BadRequestError(`${Object.values((error as any).errors).map((err: any) => err.message).join(', ')}`));
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -44,7 +52,11 @@ export const deleteCard = async (req: AuthenticatedRequest, res: Response, next:
 
     res.send({ message: 'Карточка успешно удалена' });
   } catch (error) {
-    next(error);
+    if (error instanceof Error && 'name' in error && error.name === 'CastError') {
+      next(new BadRequestError('Невалидный ID карточки'));
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -61,7 +73,11 @@ export const likeCard = async (req: AuthenticatedRequest, res: Response, next: N
 
     res.send({ data: card });
   } catch (error) {
-    next(error);
+    if (error instanceof Error && 'name' in error && error.name === 'CastError') {
+      next(new BadRequestError('Невалидный ID карточки'));
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -78,6 +94,10 @@ export const dislikeCard = async (req: AuthenticatedRequest, res: Response, next
 
     res.send({ data: card });
   } catch (error) {
-    next(error);
+    if (error instanceof Error && 'name' in error && error.name === 'CastError') {
+      next(new BadRequestError('Невалидный ID карточки'));
+    } else {
+      next(error);
+    }
   }
 };
